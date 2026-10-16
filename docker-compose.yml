@@ -1,0 +1,22 @@
+services:
+  robot-cam:
+    build: .
+    image: robot-cam:jazzy
+    container_name: robot_cam
+    # host 网络 + IPC：DDS 发现正常、WebRTC 信令端口(8443)直接暴露在宿主机
+    network_mode: host
+    ipc: host
+    # DECXIN 稳定路径（宿主机实际节点 /dev/video4；video0-3 是内置摄像头，勿用）
+    # 映射为容器内固定的 /dev/video0，不受 USB 插拔顺序影响。
+    # 若 compose 无法解析符号链接：先用 readlink -f 求出实际节点替换左侧。
+    devices:
+      - /dev/v4l/by-id/usb-DECXIN_DECXIN_CAMERA_01.00.00-video-index0:/dev/video0
+    volumes:
+      - ./config:/root/config:ro
+    environment:
+      - ROS_DOMAIN_ID=42   # 避开校园网里其他 ROS2 机器（默认 0 会被发现/拉流）
+    tty: true
+    stdin_open: true
+    # 容器即服务：直接启动 v4l2 采集 → WebRTC + /image_raw 双输出
+    # 注意：command 必须单行（YAML > 折叠会保留更深缩进续行的 \n，导致 config_path 丢失）
+    command: bash -c "source /ws/install/setup.bash && ros2 launch ros_camera_server server.launch.yaml config_path:=/root/config/camera_server.yaml"

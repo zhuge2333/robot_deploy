@@ -1,0 +1,21 @@
+# 【已弃用 2026-10-16】usb_cam 在此摄像头上限 ~15fps（camera server 的 v4l2 输入实测 30.1fps），
+# 当前采集走 config/camera_server.yaml 的 v4l2 输入。此文件仅作 usb_cam fallback 参考保留。
+# —— 以下为 usb_cam 时代记录 ——
+# usb_cam 节点参数 —— 注意：Jazzy 版 usb_cam 参数名与旧文档不同！
+#   camera_frame_id → frame_id；新增 camera_name；曝光参数：autoexposure / exposure
+# /dev/video0 是容器内路径，由宿主机 DECXIN 稳定路径映射而来（见 docker-compose.yml）。
+# 曝光策略：该摄像头 auto_exposure=3 (Aperture Priority) 时暗光下会牺牲帧率（实测掉到 15fps），
+# 故固定手动曝光。20ms 为 2026-10-16 晚间室内实测的均衡值（25ms 略过曝），
+# 帧预算 33ms(30fps)。环境光变化大时用 v4l2-ctl -d /dev/video0 --set-ctrl 调整。
+usb_cam:
+  ros__parameters:
+    video_device: /dev/video0
+    image_width: 640
+    image_height: 480
+    framerate: 30.0
+    pixel_format: mjpeg2rgb
+    frame_id: camera_link
+    camera_name: decxin
+    io_method: mmap
+    autoexposure: false
+    exposure: 200
